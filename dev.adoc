@@ -1,0 +1,25 @@
+== `go mod` not well supported in CI
+
+Ideally, as described in https://medium.com/rungo/anatomy-of-modules-in-go-c8274d215c16[https://medium.com/rungo/anatomy-of-modules-in-go-c8274d215c16],
+`go mod` is the best way to build and packaging.
+
+However, within You company, there is not way to open access to all external repos, so `go mod download` will not work.
+
+The workaround is using vendor mechanism, i.e., put the dependency packages to `vendor` folder. sigh!
+
+So in local, you can use `go mod`, but just make sure you copy all dependencis to `vendor` before you check in to git.
+
+== Put project under `~/go/src` ($GOPATH)
+
+This is for locating the package. If your package is `httpgo`, and your project folder `httpgo`, then if your project
+path is `$GOPATH/httpgo`, then to refer to the package, you need `httpgo/httpgo`.
+
+----
+httpgo
+├── cmd
+│   └── main.go
+└── httpgo
+    ├── server.go
+    ├── server_test.go
+    └── util.go
+----

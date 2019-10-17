@@ -1,0 +1,36 @@
+FROM golang:1.13-alpine as builder
+
+# on|off|auto. auto will turn on module based on the existence of go.mod
+ENV GO111MODULE=auto
+
+ENV PROJECT httpgo
+WORKDIR /go/src/$PROJECT
+
+COPY . .
+
+#RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main cmd/main.go
+
+FROM alpine:3.9 as release
+ENV PROJECT httpgo
+
+# see https://github.com/gliderlabs/docker-alpine/issues/191#issuecomment-314148406
+RUN echo 'https://dl-3.alpinelinux.org/alpine/v3.9/main' > /etc/apk/repositories
+RUN apk add --no-cache strace && apk update && apk add bash curl iptables bind-tools netcat-openbsd tcpdump busybox busybox-extras
+
+WORKDIR /bin/
+
+COPY --from=builder /go/src/$PROJECT/main httpgo
+EXPOSE 8000
+
+RUN addgroup --gid 10001 app \
+    && adduser \
+    --disabled-password \
+    --gecos "" \
+    --home /home/app \
+    --ingroup app \
+    --uid 10000 \
+    app
+USER 10000
+
+CMD ["/bin/httpgo", "-port", "8000", "-name", "httpgo", "-version", "0.0.1"]
