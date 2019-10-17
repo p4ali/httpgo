@@ -21,6 +21,7 @@ RUN apk add --no-cache strace && apk update && apk add bash curl iptables bind-t
 WORKDIR /bin/
 
 COPY --from=builder /go/src/$PROJECT/main httpgo
+COPY --from=builder /go/src/$PROJECT/run_docker_tests.sh .
 EXPOSE 8000
 
 RUN addgroup --gid 10001 app \
