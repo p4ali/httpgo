@@ -7,8 +7,6 @@ import (
 	"os"
 )
 
-var server *httpgo.Server
-
 func usage() {
 	fmt.Fprintf(os.Stderr, "usage: %s -port 8000 -name httpgo -version 0.0.1\n", os.Args[0])
 	flag.PrintDefaults()
