@@ -1,7 +1,7 @@
 ## Http Server with Golang
 
 A HTTP server with health check endpoint. By manipulate the `/health` endpoint, you can return `503` for all
-endpoints when `/health` unhealthy, or otherwise behave normally.
+endpoints (except the `POST /health` of course) when `/health` unhealthy, or otherwise behave normally.
 
 ## Headers in Response
 
@@ -35,3 +35,14 @@ endpoints when `/health` unhealthy, or otherwise behave normally.
 make
 make test
 ```
+
+We currently use `go mod`, which will download dependencies in CI. But if for any reason your CI machine
+can not download the dependencies in your/company network, you can vendor the denpendecis: `go mod vendor`,
+which will download the dependencies and put into `vendor` folder.
+
+If you want to clean up dependencies, run `go mod tidy`.
+
+
+## Published docker image
+
+The image is published as `p4ali/httpgo` on [docker hub](https://hub.docker.com/r/p4ali/httpgo).
