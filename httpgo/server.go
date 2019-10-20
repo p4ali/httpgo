@@ -25,32 +25,29 @@ type DebugResponse struct {
 	Env    map[string]string `json:"environments,omitempty"`
 }
 
-func NewServer(name string, version string) *Server {
+func NewServer(name string, version string, healthy bool) *Server {
 	return (&Server{
 		Name:    name,
 		Version: version,
+		Healthy: healthy,
 		Router:  mux.NewRouter(),
 	}).route()
 }
 
-func (s *Server) Start(port int) {
-	s.init()
+func (s *Server) Start(ip string, port int, host string) {
+	s.IP = ip
+	s.Host = host
+	s.Healthy = true
 	s.Port = port
 	fmt.Println("listening to ", s.Port)
 	log.Print(http.ListenAndServe(fmt.Sprintf(":%d", s.Port), s.Router))
-}
-
-//////////// Implement http.Handler interface ///////////
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.init()
-	fmt.Fprintf(w, "Server ip: %s\n", s.IP)
 }
 
 //////////// Routing table and handlers ///////////////
 func (s *Server) route() *Server {
 	s.Router.HandleFunc("/debug", s.c(s.handleDebug())).Methods("GET")
 	s.Router.HandleFunc("/delay/{ms}", s.c(s.handleDelay())).Methods("GET")
-	s.Router.HandleFunc("/echo", s.c(s.handleEcho()))
+	s.Router.HandleFunc("/echo/{msg}", s.c(s.handleEcho())).Methods("GET")
 	s.Router.HandleFunc("/health", s.c(s.handleHealth())).Queries("value", "{true|false}").Methods("POST")
 	s.Router.HandleFunc("/health", s.c(s.handleHealth())).Methods("GET")
 	s.Router.HandleFunc("/health", s.c(s.handleHealth())).Methods("HEAD")
@@ -124,7 +121,8 @@ func (s *Server) handleHealth() http.HandlerFunc {
 
 func (s *Server) handleEcho() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		r.Write(w)
+		params := mux.Vars(r)
+		w.Write([]byte(params["msg"]))
 	}
 }
 
@@ -146,13 +144,6 @@ func (s *Server) handleName() http.HandlerFunc {
 }
 
 /////////////// Private methods ///////////////////////////
-func (s *Server) init() *Server {
-	s.IP = GetIP()
-	s.Host = GetHostname()
-	s.Healthy = true
-	return s
-}
-
 func (s *Server) getDebugInfo() *DebugResponse {
 	info := &DebugResponse{Server: *s}
 	info.Env = GetEnvs()
@@ -165,7 +156,7 @@ func (s *Server) c(x http.HandlerFunc) http.HandlerFunc {
 
 func (s *Server) writeHeader() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Response back request made to " + r.URL.Path + " to client (" + r.RemoteAddr + ")")
+		log.Println("Response request to " + r.URL.Path + " by client (" + r.RemoteAddr + ")")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		// allow pre-flight headers
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Range, Content-Disposition, Content-Type, ETag")

@@ -23,6 +23,7 @@ endpoints (except the `POST /health` of course) when `/health` unhealthy, or oth
 |:--------------------|:------|:-------------------------------------------------------|
 | /debug              |GET    | return server info and env                             |
 | /delay/{x}          |GET    | return 200 after delay x milliseconds                  |
+| /echo/{msg}         |GET    | return 200 and print msg                               |
 | /health             |GET    | return health setting                                  |
 | /health             |POST   | update the health setting, e.g., /health?value=false   |
 | /health             |HEAD   | return health setting                                  |

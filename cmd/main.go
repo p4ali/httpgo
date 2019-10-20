@@ -27,5 +27,5 @@ func main() {
 		flag.Usage()
 	}
 
-	httpgo.NewServer(*namePtr, *versionPtr).Start(*portPtr)
+	httpgo.NewServer(*namePtr, *versionPtr, true).Start(httpgo.GetIP(), *portPtr, httpgo.GetHostname())
 }

@@ -16,7 +16,7 @@ run: main
 
 test:
 	go clean -testcache ./...
-	go test ./httpgo/
+	go test -v ./httpgo/
 
 docker-build: Dockerfile $(MAIN_SRC)
 	docker build -t p4ali/httpgo:0.0.1 .
