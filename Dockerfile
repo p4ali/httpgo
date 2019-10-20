@@ -8,7 +8,6 @@ WORKDIR /go/src/$PROJECT
 
 COPY . .
 
-#RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main cmd/main.go
 
 FROM alpine:3.9 as release

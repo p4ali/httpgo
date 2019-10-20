@@ -3,7 +3,7 @@
 Ideally, as described in https://medium.com/rungo/anatomy-of-modules-in-go-c8274d215c16[https://medium.com/rungo/anatomy-of-modules-in-go-c8274d215c16],
 `go mod` is the best way to build and packaging.
 
-However, within You company, there is not way to open access to all external repos, so `go mod download` will not work.
+However, within You company, there may be NO WAY to open access to all external repos, so `go mod download` will not work.
 
 The workaround is using vendor mechanism, i.e., put the dependency packages to `vendor` folder. sigh!
 
@@ -23,3 +23,17 @@ httpgo
     ├── server_test.go
     └── util.go
 ----
+
+== Files for docker hub
+
+The following files are used to build container, and run the test:
+
+----
+Dockerfile              (1)
+docker-compose.test.yml (2)
+run_docker_tests.sh     (3)
+----
+
+(1) docker build file
+(2) define the service to run the container
+(3) test `httpgo` endpoints within the container

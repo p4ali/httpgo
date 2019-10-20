@@ -37,12 +37,53 @@ trap report_test_result EXIT
 
 httpgo -port 8000 &
 
-assertion="health should return 200"
-status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/health)
-if [ "$status" == "200" ]; then
-  pass "$assertion"
-else
+assertion="Can update health"
+echo "Negative case: All should return 503 after POST health?value=false"
+
+# for loop in case httpgo is not ready yet
+ok=0
+for i in {1..30}; do
+  status=$(curl -s -o /dev/null -w '%{http_code}' -XPOST http://localhost:8000/health?value=false)
+  if [ "$status" != "200" ]; then
+    echo "status=$status, sleep 2 seconds then retry..."
+    sleep 2s
+    continue
+  else
+    ok=1
+    break
+  fi
+done
+
+if [ $ok -ne 1 ]; then
   fail "$assertion"
+else
+  pass "$assertion"
 fi
 
-exit $FAILED
+urls=("debug" "echo/x" "delay/123" "status/200" "health")
+for i in "${urls[@]}"; do
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/${i})
+  subAssertion="GET ${i} $status"
+  if [ "$status" == "503" ]; then
+    pass "$subAssertion"
+  else
+    fail "$subAssertion"
+  fi
+done
+echo "Positive case: All should return 200 after POST health?value=true"
+status=$(curl -s -o /dev/null -w '%{http_code}' -XPOST http://localhost:8000/health?value=true)
+if [ "$status" != "200" ]; then
+  fail "$assertion"
+fi
+urls=("debug" "echo/x" "delay/123" "status/200" "health")
+for i in "${urls[@]}"; do
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/${i})
+  subAssertion="GET ${i} $status"
+  if [ "$status" == "200" ]; then
+    pass "$subAssertion"
+  else
+    fail "$subAssertion"
+  fi
+done
+
+exit ${FAILED}

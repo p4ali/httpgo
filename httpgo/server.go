@@ -73,7 +73,6 @@ func (s *Server) handleDelay() http.HandlerFunc {
 			return
 		}
 		time.Sleep(time.Duration(int(i64)) * time.Millisecond)
-		w.WriteHeader(200)
 		w.Write([]byte(fmt.Sprintf("Delayed %d", int(i64))))
 	}
 }
@@ -97,11 +96,9 @@ func (s *Server) handleHealth() http.HandlerFunc {
 		case "HEAD":
 			fallthrough
 		case "GET":
-			c := http.StatusOK
 			if !s.Healthy {
-				c = http.StatusServiceUnavailable
+				w.WriteHeader(http.StatusServiceUnavailable)
 			}
-			w.WriteHeader(c)
 			break
 		case "POST":
 			set := r.URL.Query().Get("value")
@@ -156,7 +153,7 @@ func (s *Server) c(x http.HandlerFunc) http.HandlerFunc {
 
 func (s *Server) writeHeader() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Response request to " + r.URL.Path + " by client (" + r.RemoteAddr + ")")
+		log.Println("Response request to " + r.URL.String() + " by client (" + r.RemoteAddr + ")")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		// allow pre-flight headers
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Range, Content-Disposition, Content-Type, ETag")
