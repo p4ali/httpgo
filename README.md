@@ -60,3 +60,5 @@ If you want to clean up dependencies, run `go mod tidy`.
 ## Published docker image
 
 The image is published as `p4ali/httpgo` on [docker hub](https://hub.docker.com/r/p4ali/httpgo).
+The tag containing  `nonroot` is the the image built from `nonroot` branch, where user can only run 
+as non-root. Other tag is for image built from master where user can run as root.
