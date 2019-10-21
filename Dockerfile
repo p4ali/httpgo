@@ -23,4 +23,15 @@ COPY --from=builder /go/src/$PROJECT/main httpgo
 COPY --from=builder /go/src/$PROJECT/run_docker_tests.sh .
 EXPOSE 8000
 
+# run user as non-root, which is normally required by psp
+RUN addgroup --gid 10001 app \
+    && adduser \
+    --disabled-password \
+    --gecos "" \
+    --home /home/app \
+    --ingroup app \
+    --uid 10000 \
+    app
+USER 10000
+
 CMD ["/bin/httpgo", "-port", "8000", "-name", "httpgo", "-version", "0.0.1"]
