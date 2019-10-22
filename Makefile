@@ -5,11 +5,14 @@ MAIN_SRC=cmd/main.go
 go: run
 
 clean:
-	rm -f main docker-build
+	rm -f main linux docker-build
 
 main: $(MAIN_SRC)
 	go build -o main -v $(MAIN_SRC)
 	@chmod +x main
+
+linux: $(MAIN_SRC)
+	GOOS=linux GOARCH=amd64 go build -o main -v $(MAIN_SRC)
 
 run: main
 	./main -port 8000 -name httpgo -version 0.0.1
