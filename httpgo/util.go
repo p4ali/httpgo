@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// GetEnvs get environment variable as string
 func GetEnvs() map[string]string {
 	envs := make(map[string]string)
 	for _, s := range os.Environ() {
@@ -35,6 +36,7 @@ func GetIP() string {
 	return "unknown"
 }
 
+// GetHostname return hostname
 func GetHostname() string {
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -43,6 +45,7 @@ func GetHostname() string {
 	return hostname
 }
 
+// Chain two handlers
 func Chain(x http.HandlerFunc, y http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		x(w, r)
