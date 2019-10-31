@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// Server status
 type Server struct {
 	Name    string      `json:"name,omitempty"`
 	Version string      `json:"version,omitempty"`
@@ -20,11 +21,13 @@ type Server struct {
 	Router  *mux.Router `json:"-"`
 }
 
+// DebugResponse represents debug info in each response
 type DebugResponse struct {
 	Server Server            `json:"server,omitempty"`
 	Env    map[string]string `json:"environments,omitempty"`
 }
 
+// NewServer create a http server
 func NewServer(name string, version string, healthy bool) *Server {
 	return (&Server{
 		Name:    name,
@@ -34,6 +37,7 @@ func NewServer(name string, version string, healthy bool) *Server {
 	}).route()
 }
 
+// Start a http server
 func (s *Server) Start(ip string, port int, host string) {
 	s.IP = ip
 	s.Host = host
