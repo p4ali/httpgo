@@ -49,4 +49,4 @@ docker-build: Dockerfile $(MAIN_SRC)
 	@touch docker-build
 
 docker-run: docker-build
-	docker run -d --rm --name httpgo -p12345:12345 -it p4ali/httpgo:0.0.1 /bin/httpgo -port 12345 -version 0.0.1
+	docker run -d --rm --name httpgo -p12345:12345 -it p4ali/httpgo:0.0.1 /bin/httpgo -port 12345
