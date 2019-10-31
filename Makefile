@@ -1,18 +1,28 @@
-.PHONY: all go clean
+# usage: make version=1.0.0 goos=darwin|linux|windows release
 
+# always run these targets
+.PHONY: all go clean release
+
+# variables
 MAIN_SRC=cmd/main.go
+goos=darwin
+version=1.0.0
 
 go: run
 
 clean:
-	rm -f main linux docker-build
+	rm -rf main docker-build bin release
 
 main: $(MAIN_SRC)
 	go build -o main -v $(MAIN_SRC)
 	@chmod +x main
 
-linux: $(MAIN_SRC)
-	GOOS=linux GOARCH=amd64 go build -o main -v $(MAIN_SRC)
+# available goos: linux|darwin|windows
+release: $(MAIN_SRC)
+	@mkdir -p bin release
+	GOOS=$(goos) GOARCH=amd64 go build -o bin/$(goos)/httpgo -v $(MAIN_SRC)
+	@tar cvfz release/httpgo-$(version)-$(goos).tar.gz -C bin/$(goos) httpgo
+	@sha256sum release/httpgo-$(version)-$(goos).tar.gz > release/httpgo-$(version)-$(goos).tar.gz.sha256
 
 run: main
 	./main -port 8000 -name httpgo -version 0.0.1
