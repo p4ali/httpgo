@@ -1,6 +1,7 @@
 package httpgo
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 )
@@ -119,6 +121,27 @@ func TestGetDebug(t *testing.T) {
 	checkError(t, err)
 	checkResponseCode(t, http.StatusOK, resp.StatusCode)
 	matchBody(t, ".*server.*name.*", resp)
+}
+
+func TestPostCallOther(t *testing.T) {
+	body := strings.Join([]string{"http://www.google.com"}, "\r\n")
+	// async
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/callother", server.URL), bytes.NewBuffer([]byte(body)))
+	checkError(t, err)
+	req.Header.Set("Accept-Encoding", "*")
+	resp, err := client.Do(req)
+	checkError(t, err)
+	checkResponseCode(t, 200, resp.StatusCode)
+	matchBody(t, ".*google.com*", resp)
+
+	// sync
+	req, err = http.NewRequest("POST", fmt.Sprintf("%s/callother?sync=true", server.URL), bytes.NewBuffer([]byte(body)))
+	checkError(t, err)
+	req.Header.Set("Accept-Encoding", "*")
+	resp, err = client.Do(req)
+	checkError(t, err)
+	checkResponseCode(t, 200, resp.StatusCode)
+	matchBody(t, ".*google.com*", resp)
 }
 
 // Helper functions

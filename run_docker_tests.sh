@@ -86,4 +86,19 @@ for i in "${urls[@]}"; do
   fi
 done
 
+assertion="POST callother?sync=true"
+status=$(curl -s -o /dev/null -w '%{http_code}' localhost:8000/callother?sync=true -d"http://www.google.com" -H"Accept-Encoding: *")
+if [ "$status" == "200" ]; then
+  pass "$assertion"
+else
+  fail "$assertion"
+fi
+assertion="POST callother"
+status=$(curl -s -o /dev/null -w '%{http_code}' localhost:8000/callother -d"http://www.google.com" -H"Accept-Encoding: *")
+if [ "$status" == "200" ]; then
+  pass "$assertion"
+else
+  fail "$assertion"
+fi
+
 exit ${FAILED}
