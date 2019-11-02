@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,6 +21,7 @@ type Server struct {
 	Host    string      `json:"hostname,omitempty"`
 	IP      string      `json:"ip,omitempty"`
 	Router  *mux.Router `json:"-"`
+	Client  http.Client `json:"-"`
 }
 
 // DebugResponse represents debug info in each response
@@ -43,12 +46,14 @@ func (s *Server) Start(ip string, port int, host string) {
 	s.Host = host
 	s.Healthy = true
 	s.Port = port
+	s.Client = http.Client{Timeout: time.Duration(int(60)) * time.Second}
 	fmt.Println("listening to ", s.Port)
 	log.Print(http.ListenAndServe(fmt.Sprintf(":%d", s.Port), s.Router))
 }
 
 //////////// Routing table and handlers ///////////////
 func (s *Server) route() *Server {
+	s.Router.HandleFunc("/callother", s.c(s.handleCallOther())).Methods("POST")
 	s.Router.HandleFunc("/debug", s.c(s.handleDebug())).Methods("GET")
 	s.Router.HandleFunc("/delay/{ms}", s.c(s.handleDelay())).Methods("GET")
 	s.Router.HandleFunc("/echo/{msg}", s.c(s.handleEcho())).Methods("GET")
@@ -59,6 +64,59 @@ func (s *Server) route() *Server {
 	s.Router.HandleFunc("/name", s.c(s.handleName())).Queries("name", "{.*}").Methods("POST")
 	s.Router.HandleFunc("/status/{code}", s.c(s.handleStatus())).Methods("GET")
 	return s
+}
+func (s *Server) handleCallOther() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Println("Error while attempting to read body of incoming request.")
+			w.WriteHeader(400)
+			return
+		}
+		urls := strings.Split(string(body[:]), "\r\n")
+		var doSync = false
+		if val, exist := r.URL.Query()["sync"]; exist {
+			doSync = strings.ToUpper(val[0]) == "TRUE"
+			log.Println("Will do synchronous invocations per request override value.")
+		}
+		c := make(chan string)
+		for _, url := range urls {
+			go s.invokeURL(url, r, c)
+			if doSync {
+				w.Write([]byte(<-c))
+			}
+		}
+		if !doSync {
+			for range urls {
+				w.Write([]byte(<-c))
+			}
+		}
+	}
+}
+
+func (s *Server) invokeURL(url string, orig *http.Request, c chan string) {
+	urlResp := "<<Error>>"
+	req, _ := http.NewRequest("GET", url, nil)
+	for k, v := range orig.Header {
+		req.Header.Set(k, v[0])
+		log.Println("set header " + k + ": " + v[0])
+	}
+	log.Println("Invoking url: ", url)
+	resp, urlErr := s.Client.Do(req)
+	if urlErr == nil {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			log.Println("Response :", resp.Status)
+			log.Println("Response body :", string(body[:]))
+			urlResp = url + ": " + string(body[:]) + "\n"
+		} else {
+			log.Println("Error during invocation, status-code=", resp.StatusCode)
+		}
+	} else {
+		log.Println("Error while trying to prepare for url request: ", urlErr)
+	}
+	c <- urlResp
 }
 
 func (s *Server) handleDebug() http.HandlerFunc {

@@ -29,15 +29,16 @@ endpoints (except the `POST /health` of course) when `/health` unhealthy, or oth
 
 **Endpoints**
 
-|Endpoint             |Method | Description                                            |
-|:--------------------|:------|:-------------------------------------------------------|
-| /debug              |GET    | return server info and env                             |
-| /delay/{x}          |GET    | return 200 after delay x milliseconds                  |
-| /echo/{msg}         |GET    | return 200 and print msg                               |
-| /health             |GET    | return health setting                                  |
-| /health             |POST   | update the health setting, e.g., /health?value=false   |
-| /health             |HEAD   | return health setting                                  |
-| /status/{code}      |GET    | return given `code` as status                          |
+|Endpoint             |Method | Description                                                                        |
+|:--------------------|:------|:-----------------------------------------------------------------------------------|
+| /callother          |POST   | call other urls in `\r\n` separated string in request body, e.g., `url1\r\nurl2`      |
+| /debug              |GET    | return server info and env                                                         |
+| /delay/{x}          |GET    | return 200 after delay x milliseconds                                              |
+| /echo/{msg}         |GET    | return 200 and print msg                                                           |
+| /health             |GET    | return health setting                                                              |
+| /health             |POST   | update the health setting, e.g., /health?value=false                               |
+| /health             |HEAD   | return health setting                                                              |
+| /status/{code}      |GET    | return given `code` as status                                                      |
 
 
 ## Development
