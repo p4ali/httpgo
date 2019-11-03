@@ -71,3 +71,6 @@ make version=1.0.0 goos=windows release
 make version=1.0.0 goos=linux release
 make version=1.0.0 goos=darwin release  # default make release
 ```
+
+After that, you can use `brew install p4ali/tools/httpgo` to install `httgo` to `/usr/local/Cellar/httpgo/1.0.0` 
+and create a symbol link at `/usr/local/bin/httpgo`.
