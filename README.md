@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/p4ali/httpgo.svg?branch=master)](https://travis-ci.org/p4ali/httpgo)
 [![Go Report Card](https://goreportcard.com/badge/github.com/p4ali/httpgo)](https://goreportcard.com/report/github.com/p4ali/httpgo)
 [![Documentation](https://godoc.org/github.com/p4ali/httpgo?status.svg)](http://godoc.org/github.com/p4ali/httpgo)
-[![Coverage Status](https://coveralls.io/repos/github/p4ali/httpgo/badge.svg)](https://coveralls.io/github/p4ali/httpgo)
+[![Coverage Status](https://coveralls.io/repos/github/p4ali/httpgo/badge.svg?branch=master)](https://coveralls.io/github/p4ali/httpgo?branch=master)
 [![GitHub issues](https://img.shields.io/github/issues/p4ali/httpgo.svg)](https://github.com/p4ali/httpgo/issues)
 [![license](https://img.shields.io/github/license/p4ali/httpgo.svg?maxAge=2592000)](https://github.com/p4ali/httpgo/blob/master/LICENSE)
 [![Release](https://img.shields.io/github/release/p4ali/httpgo.svg?label=Release)](https://github.com/p4ali/httpgo/releases)
@@ -40,7 +40,7 @@ endpoints (except the `POST /health` of course) when `/health` unhealthy, or oth
 
 |Endpoint             |Method | Description                                                                        |
 |:--------------------|:------|:-----------------------------------------------------------------------------------|
-| /callother          |POST   | call other urls in `\r\n` separated string in request body, e.g., `url1\r\nurl2`      |
+| /callother          |POST   | call other urls in `\r\n` separated string in request body, e.g., `url1\r\nurl2`   |
 | /debug              |GET    | return server info and env                                                         |
 | /delay/{x}          |GET    | return 200 after delay x milliseconds                                              |
 | /echo/{msg}         |GET    | return 200 and print msg                                                           |

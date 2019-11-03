@@ -37,3 +37,26 @@ run_docker_tests.sh     (3)
 (1) docker build file
 (2) define the service to run the container
 (3) test `httpgo` endpoints within the container
+
+== TODO
+
+Using https://quii.gitbook.io/learn-go-with-tests/go-fundamentals/mocking[mocking] to increase the code coverage:
+
+* Add `type Logger interface` for logging and mock
+* Factor out the logic for handling response to a function, so that we can test it
+
+== Reference
+
+* https://godoc.org/-/about[Add package to GoDoc]
+* https://blog.golang.org/godoc-documenting-go-code[Godoc: documenting Go code]
+* https://medium.com/@elliotchance/godoc-tips-tricks-cda6571549b[godoc: Tips & Tricks]
+* https://github.com/yangwenmai/how-to-add-badge-in-github-readme[Adding badge for Travis-CI & GoReportCard & Coveralls]
+* https://shields.io/category/issue-tracking[The shields.io for tracking]
+* https://gist.github.com/lukas-h/2a5d00690736b4c3a7ba[Markdown License badges]
+* https://docs.codecov.io/docs/team-bot[Install Codecov's GiHub App]
+* https://codecov.io/gh/p4ali/httpgo[codecov.io for github]
+* https://coveralls.io/github/p4ali/httpgo?branch=master[Coverall for github]
+* https://help.github.com/en/github/creating-cloning-and-archiving-repositories/licensing-a-repository[Licensing a repository]
+* https://quii.gitbook.io/learn-go-with-tests/go-fundamentals/mocking[Learn go with tests - including Mocking]
+* https://github.com/golang/mock[gomock]
+* https://blog.cleancoder.com/uncle-bob/2014/05/10/WhenToMock.html[When to Mock by Robert C. Martin]

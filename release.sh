@@ -11,7 +11,7 @@ ver=$1
 
 create_new_tag(){
   # assume you get the recent tip, and committed everything
-   git fetch origin
+  git fetch origin
   git checkout master
   git merge origin/master
 

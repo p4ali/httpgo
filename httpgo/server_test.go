@@ -1,8 +1,10 @@
-package httpgo
+package httpgo_test
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"github.com/p4ali/httpgo/httpgo"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,11 +16,17 @@ import (
 	"time"
 )
 
+// To start a new Server on host of "turing" with nick name "foo", version "1.1.0" and healthy "true":
+//   import "github.com/p4ali/httpgo/httpgo"
+func Example() {
+	httpgo.NewServer("foo", "1.1.0", true).Start("127.0.0.1", 8000, "turing")
+}
+
 var server *httptest.Server
 var client = &http.Client{}
 
 func TestMain(m *testing.M) {
-	handler := NewServer("test", "0.0.1", true)
+	handler := httpgo.NewServer("test", "0.0.1", true)
 	server = httptest.NewServer(handler.Router)
 	defer server.Close()
 	code := m.Run()
@@ -145,6 +153,41 @@ func TestPostCallOther(t *testing.T) {
 	matchBody(t, ".*google.com*", resp)
 }
 
+func TestPostName(t *testing.T) {
+	// set
+	resp, err := http.Post(fmt.Sprintf("%s/name?value=foo", server.URL), "application/json", nil)
+	checkError(t, err)
+	checkResponseCode(t, 200, resp.StatusCode)
+
+	// get
+	resp, err = http.Get(fmt.Sprintf("%s/name", server.URL))
+	checkError(t, err)
+	checkResponseCode(t, 200, resp.StatusCode)
+	matchBody(t, "foo", resp)
+}
+
+func TestStart(t *testing.T) {
+	server := httpgo.NewServer("test", "0.0.1", true)
+	go func() {
+		server.Start("127.0.0.1", 12345, "localhost")
+	}()
+	defer server.HTTPServer.Close()
+	task := func() (bool, error) {
+		url := "http://127.0.0.1:12345/debug"
+		resp, err := http.Get(url)
+		if err == nil {
+			if 200 != resp.StatusCode {
+				err = fmt.Errorf("Expected response code %d. Got %d", 200, resp.StatusCode)
+			}else{
+				log.Print("Got 200 calling HTTPServer ", url)
+			}
+		}
+		return err == nil, err
+	}
+	_, err := timeout(60*time.Second, 2*time.Second, task)
+	checkError(t, err)
+}
+
 // Helper functions
 func checkError(t *testing.T, err error) {
 	if err != nil {
@@ -169,6 +212,25 @@ func matchBody(t *testing.T, expectedBody string, resp *http.Response) {
 		}
 		if !match {
 			t.Fatalf("Expected response body %s. Got %s\n", expectedBody, body)
+		}
+	}
+}
+
+func timeout(total time.Duration, interval time.Duration, doSomething func()(bool, error)) (bool, error) {
+	timeout := time.After(total)
+	tick := time.Tick(interval)
+	for {
+		select {
+		case <-timeout:
+			return false, errors.New("timed out")
+		case <-tick:
+			ok, err := doSomething()
+			if err != nil {
+				log.Print("doSomething failed, retry... ",err)
+			} else if ok {
+				log.Print("doSomething succeed!")
+				return true, nil
+			}
 		}
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -15,23 +16,18 @@ import (
 
 // Server status
 type Server struct {
-	Name    string      `json:"name,omitempty"`
-	Version string      `json:"version,omitempty"`
-	Port    int         `json:"port,omitempty"`
-	Healthy bool        `json:"healthy,omitempty"`
-	Host    string      `json:"hostname,omitempty"`
-	IP      string      `json:"ip,omitempty"`
-	Router  *mux.Router `json:"-"`
-	Client  http.Client `json:"-"`
+	Name       string      `json:"name,omitempty"`      // server name
+	Version    string      `json:"version,omitempty"`   // server version
+	Port       int         `json:"port,omitempty"`      // port to listen
+	Healthy    bool        `json:"healthy,omitempty"`   // server healthy or not. If not all calls except /health POST will return 503
+	Host       string      `json:"hostname,omitempty"`  // hostname
+	IP         string      `json:"ip,omitempty"`        // host IP
+	Router     *mux.Router `json:"-"`                   // router manage the routes and handlers
+	Client     http.Client `json:"-"`                   // http client to call other APIs
+	HTTPServer http.Server `json:"-"`                   // underline http server
 }
 
-// DebugResponse represents debug info in each response
-type DebugResponse struct {
-	Server Server            `json:"server,omitempty"`
-	Env    map[string]string `json:"environments,omitempty"`
-}
-
-// NewServer create a http server
+// NewServer create a http server, given the name, version and health status of the server
 func NewServer(name string, version string, healthy bool) *Server {
 	return (&Server{
 		Name:    name,
@@ -49,24 +45,26 @@ func (s *Server) Start(ip string, port int, host string) {
 	s.Port = port
 	s.Client = http.Client{Timeout: time.Duration(int(60)) * time.Second}
 	fmt.Println("listening to ", s.Port)
-	log.Print(http.ListenAndServe(fmt.Sprintf(":%d", s.Port), s.Router))
+	svr := &http.Server{Addr: fmt.Sprintf(":%d", s.Port), Handler: s.Router}
+	log.Print(svr.ListenAndServe())
 }
 
-//////////// Routing table and handlers ///////////////
+//////////// Routing table ///////////////
 func (s *Server) route() *Server {
-	s.Router.HandleFunc("/callother", s.c(s.handleCallOther())).Methods("POST")
-	s.Router.HandleFunc("/debug", s.c(s.handleDebug())).Methods("GET")
-	s.Router.HandleFunc("/delay/{ms}", s.c(s.handleDelay())).Methods("GET")
-	s.Router.HandleFunc("/echo/{msg}", s.c(s.handleEcho())).Methods("GET")
-	s.Router.HandleFunc("/health", s.c(s.handleHealth())).Queries("value", "{true|false}").Methods("POST")
-	s.Router.HandleFunc("/health", s.c(s.handleHealth())).Methods("GET")
-	s.Router.HandleFunc("/health", s.c(s.handleHealth())).Methods("HEAD")
-	s.Router.HandleFunc("/name", s.c(s.handleName())).Methods("GET")
-	s.Router.HandleFunc("/name", s.c(s.handleName())).Queries("name", "{.*}").Methods("POST")
-	s.Router.HandleFunc("/status/{code}", s.c(s.handleStatus())).Methods("GET")
+	s.Router.HandleFunc("/callother", s.injectHeaderThen(s.handleCallOther())).Methods("POST")
+	s.Router.HandleFunc("/debug", s.injectHeaderThen(s.handleDebug())).Methods("GET")
+	s.Router.HandleFunc("/delay/{ms}", s.injectHeaderThen(s.handleDelay())).Methods("GET")
+	s.Router.HandleFunc("/echo/{msg}", s.injectHeaderThen(s.handleEcho())).Methods("GET")
+	s.Router.HandleFunc("/health", s.injectHeaderThen(s.handleHealth())).Queries("value", "{true|false}").Methods("POST")
+	s.Router.HandleFunc("/health", s.injectHeaderThen(s.handleHealth())).Methods("GET")
+	s.Router.HandleFunc("/health", s.injectHeaderThen(s.handleHealth())).Methods("HEAD")
+	s.Router.HandleFunc("/name", s.injectHeaderThen(s.handleName())).Methods("GET")
+	s.Router.HandleFunc("/name", s.injectHeaderThen(s.handleName())).Queries("value", "{.*}").Methods("POST")
+	s.Router.HandleFunc("/status/{code}", s.injectHeaderThen(s.handleStatus())).Methods("GET")
 	return s
 }
 
+//////////// handlers ///////////////
 func (s *Server) handleCallOther() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
@@ -123,7 +121,12 @@ func (s *Server) invokeURL(url string, orig *http.Request, c chan string) {
 
 func (s *Server) handleDebug() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(s.getDebugInfo())
+		err := json.NewEncoder(w).Encode(s.getDebugInfo())
+		if err != nil {
+			log.Print(err)
+			w.WriteHeader(500)
+			return
+		}
 	}
 }
 
@@ -196,7 +199,7 @@ func (s *Server) handleName() http.HandlerFunc {
 			w.Write([]byte(s.Name))
 			break
 		case "POST":
-			s.Name = r.URL.Query().Get("name")
+			s.Name = r.URL.Query().Get("value")
 			c := http.StatusOK
 			w.WriteHeader(c)
 			break
@@ -204,17 +207,38 @@ func (s *Server) handleName() http.HandlerFunc {
 	}
 }
 
-/////////////// Private methods ///////////////////////////
-func (s *Server) getDebugInfo() *DebugResponse {
-	info := &DebugResponse{Server: *s}
-	info.Env = GetEnvs()
+/////////////// Util struct and methods ///////////////////////////
+// debugResponse represents debug info in each response
+type debugResponse struct {
+	Server Server            `json:"server,omitempty"`
+	Env    map[string]string `json:"environments,omitempty"`
+}
+
+func (s *Server) getDebugInfo() *debugResponse {
+	info := &debugResponse{}
+	info.Env = getEnvs()
 	return info
 }
 
-func (s *Server) c(x http.HandlerFunc) http.HandlerFunc {
-	return Chain(s.writeHeader(), x)
+// getEnvs get environment variable as string
+func getEnvs() map[string]string {
+	envs := make(map[string]string)
+	for _, s := range os.Environ() {
+		kv := strings.SplitN(s, "=", 2)
+		envs[kv[0]] = kv[1]
+	}
+	return envs
 }
 
+// inject header before calling the handler x
+func (s *Server) injectHeaderThen(x http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.writeHeader()(w, r)
+		x(w, r)
+	}
+}
+
+// write server state as header for debug
 func (s *Server) writeHeader() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Response request to " + r.URL.String() + " by client (" + r.RemoteAddr + ")")
