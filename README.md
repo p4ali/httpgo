@@ -1,3 +1,12 @@
+# httpgo 
+[![Build Status](https://travis-ci.org/p4ali/httpgo.svg?branch=master)](https://travis-ci.org/p4ali/httpgo)
+[![Go Report Card](https://goreportcard.com/badge/github.com/p4ali/httpgo)](https://goreportcard.com/report/github.com/p4ali/httpgo)
+[![Documentation](https://godoc.org/github.com/p4ali/httpgo?status.svg)](http://godoc.org/github.com/p4ali/httpgo)
+[![Coverage Status](https://coveralls.io/repos/github/p4ali/httpgo/badge.svg)](https://coveralls.io/github/p4ali/httpgo)
+[![GitHub issues](https://img.shields.io/github/issues/p4ali/httpgo.svg)](https://github.com/p4ali/httpgo/issues)
+[![license](https://img.shields.io/github/license/p4ali/httpgo.svg?maxAge=2592000)](https://github.com/p4ali/httpgo/blob/master/LICENSE)
+[![Release](https://img.shields.io/github/release/p4ali/httpgo.svg?label=Release)](https://github.com/p4ali/httpgo/releases)
+
 ## Why another image for http server
 
 When we proto-type or debug in container runtime, we often need a smaller http server image (for quick download)

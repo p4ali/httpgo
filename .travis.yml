@@ -1,0 +1,40 @@
+language: go
+sudo: false
+
+notifications:
+  email:
+    recipients:
+    - cli.power@gmail.com
+#  slack: xxxx:xxxxxxxxxx
+  on_success: change
+  on_failure: always
+
+go:
+- 1.13.3
+
+install:
+- go get github.com/go-playground/overalls
+- go get github.com/mattn/goveralls
+- go get github.com/smartystreets/goconvey
+- mkdir -p $GOPATH/src/github.com/p4ali
+- cd $GOPATH/src/github.com/p4ali/httpgo
+
+script:
+- overalls -project=github.com/p4ali/httpgo -covermode=count -ignore='.git,_vendor'
+- goveralls -coverprofile=overalls.coverprofile -service=travis-ci -repotoken $COVERALLS_TOKEN
+- go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+- go test ./...
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)
+
+env:
+  global:
+    secure: "TFXKJ8Nm0fPc0tOiHDS9guObGJOCpcAFmfhIIkl20p+4+VfXLDyAjzYnt0/7TXwx0cbaaaxW2+JMLnNF/XoF/jeV5xuW9iYP5SIcaO78lnJBD42sxpzKCXB0jwcBMBK0ysi4GnE+Hq8UxXgBROKMxSpQA4hl/7dTJqmqtN3vEGibnhEC8xNDqx4cGbFrY2L6xqxI7IbI2cRRShhWerm9gdMU6nSFo91Al3Y/49sGallEL5dCHLss/YM1et4LtDPU1s4UhrFnhZMz04TpKQH/tbu59/8iVAat6crslvM2+siZTQa3fFFwnJeRUMkX+EAjfwpuec53iNyy8Pc7eBK12T3c3QRFy/cZZjhnrNrJxCBxpTmnmRlKeDTQ5om9shSFQjV2TfmjTeu2d/AcJLFum1zvbRgh/cK/svs1PgOgf2+Sg72h5qCCHZX3zeOK8CAlkBjiMqZAcDzu3cyvHaaIgIAPfBi+/qFDmQdzJUO3dS44Ar/SMRYpPJsCjQ1mfhgLJf8a3z+7jlAhmTm9JpCVeqZeMXMMvz3ks/u00zRHeL/k3AKUH/Ynx+xizOxxc6bMnTAWC26bhen9+l8DzPdtH0B3uJIlVu1KV/2Iw6mvQwtdoegF0j04Yx6Kib2DPgEFNHu4jpIUVk1UVkCww2hrEHAqx/QIBKbgbkUpUYDrSig="
+
+#
+# TO set env COVERALLS_TOKEN: https://github.com/yangwenmai/how-to-add-badge-in-github-readme
+# 1) gem install travis
+# 2) travis encrypt COVERALLS_TOKEN=4F370rPIlD8pkpbNP4sdrnZeF98sB2VIN
+# 3) update env.global.secure with generated token
+#

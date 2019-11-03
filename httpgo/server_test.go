@@ -50,6 +50,7 @@ func TestHttpGet(t *testing.T) {
 	for _, test := range tests {
 		log.Print(fmt.Sprintf("TEST: %s %s", test.method, test.url))
 		req, err := http.NewRequest(test.method, test.url, nil)
+		checkError(t, err)
 		resp, err := client.Do(req)
 		checkError(t, err)
 		checkResponseCode(t, test.expectedStatus, resp.StatusCode)

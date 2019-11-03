@@ -1,3 +1,4 @@
+// Package httpgo provide REST Server and APIs
 package httpgo
 
 import (
@@ -65,6 +66,7 @@ func (s *Server) route() *Server {
 	s.Router.HandleFunc("/status/{code}", s.c(s.handleStatus())).Methods("GET")
 	return s
 }
+
 func (s *Server) handleCallOther() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
