@@ -64,6 +64,9 @@ go mod vendor
 ```
 which will download the dependencies and put into `vendor` folder.
 
+**NOTE**: you need set `GO111MODULE=off` when using `vendor` folder, otherwise, `go mod` will still try 
+download dependencies..
+
 If you want to clean up dependencies, run `go mod tidy`.
 
 
