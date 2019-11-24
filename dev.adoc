@@ -44,6 +44,9 @@ Using https://quii.gitbook.io/learn-go-with-tests/go-fundamentals/mocking[mockin
 
 * Add `type Logger interface` for logging and mock
 * Factor out the logic for handling response to a function, so that we can test it
+* Enrich logging, e.g., show request header
+* https://sysdig.com/blog/prometheus-metrics/[Serve prometheus metrics]
+* https://github.com/ZachtimusPrime/Go-Splunk-HTTP[Report log to splunk]
 
 == Reference
 
